@@ -1,0 +1,20 @@
+{
+  "name": "slack-openhands-integration",
+  "version": "1.0.0",
+  "description": "Slack bot that integrates with OpenHands",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "@slack/bolt": "^3.15.0",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "socket.io-client": "^4.8.1",
+    "ws": "^8.14.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

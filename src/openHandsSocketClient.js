@@ -261,8 +261,8 @@ class OpenHandsSocketClient {
                   conversationData.hasStarted = true;
                   
                   const responseMessage = isFirstMessage 
-                    ? `🤖 **OpenHands処理開始！**\n\n💬 **質問**: "${message}"\n\n🚀 **OpenHandsで確認**: ${this.baseUrl}/conversations/${conversationId}\n\n✨ **状況**: メッセージ送信完了、応答をお待ちください\n\n💡 このスレッドではメンション不要で続けて質問できます`
-                    : `📤 **送信完了**: "${message}"`;
+                    ? `🤖 **OpenHands Processing Started!**\n\n💬 **Question**: "${message}"\n\n🚀 **View on OpenHands**: ${this.baseUrl}/conversations/${conversationId}\n\n✨ **Status**: Message sent successfully, waiting for response`
+                    : `📤 **Message Sent**: "${message}"`;
 
                   resolve({
                     message: responseMessage,

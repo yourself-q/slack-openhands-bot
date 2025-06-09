@@ -1,135 +1,183 @@
-# Slack-OpenHands Integration Bot
+# Slack-OpenHands Bot
 
-[日本語版](README.ja.md) | English
+A Slack bot that integrates with OpenHands using Socket Mode (no domain required).
 
-A system that integrates Slack bot with OpenHands, allowing you to use OpenHands AI assistant directly from Slack.
+🇺🇸 English | [🇯🇵 日本語](README_JP.md)
+
+## Project Overview
+
+### 🎯 Purpose
+OpenHands is a powerful AI development assistant, but traditionally requires web UI interaction. This bot brings OpenHands functionality directly into Slack, where teams already collaborate daily.
+
+### 💡 Problems It Solves
+- **Accessibility**: Direct OpenHands access from Slack without opening web UI
+- **Team Collaboration**: Project management through Slack's threading system
+- **Easy Setup**: No domain configuration required with Socket Mode
+- **Context Continuity**: Maintains conversation context for ongoing development
+
+### 🚀 Use Cases
+- Code review requests
+- Bug fixing consultations  
+- New feature implementation support
+- Documentation generation
+- Team pair programming sessions
 
 ## Features
 
-- Start conversations with OpenHands by mentioning the bot in Slack
-- Continuous conversation within threads (no mention required for follow-ups)
-- Automatic forwarding of OpenHands responses to Slack
-- Direct message support
-- Slash commands for status checking and management
+- 🤖 Chat with OpenHands directly from Slack
+- 🧵 Thread-based conversations (each thread = separate project)
+- 💬 Direct message support
+- 🔌 Socket Mode (no webhook/domain setup needed)
+- ⚡ Real-time responses from OpenHands
 
-## Requirements
+## Quick Setup
 
-- Node.js 18+
-- OpenHands (running on localhost:3000)
-- Slack App (Bot Token & Signing Secret)
-- GitHub Token (for code operations in OpenHands)
+### 1. Prerequisites
 
-## Setup
+- Node.js 18+ installed
+- OpenHands running on `http://localhost:3000`
+- Slack workspace with admin permissions
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/yourself-q/slack-openhands-integration.git
-cd slack-openhands-integration
-```
+### 2. Create Slack App
 
-### 2. Install dependencies
+1. Go to https://api.slack.com/apps
+2. Click "Create New App" → "From scratch"
+3. Name your app (e.g., "OpenHands Bot") and select workspace
+
+### 3. Configure Bot Permissions
+
+In your Slack app:
+
+**OAuth & Permissions** → Bot Token Scopes:
+- `app_mentions:read`
+- `chat:write`
+- `im:read`
+- `im:write`
+- `commands`
+
+**Socket Mode**:
+- Enable Socket Mode
+- Create App-Level Token with scope: `connections:write`
+
+### 4. Install Bot
+
 ```bash
 npm install
 ```
 
-### 3. Environment configuration
-Copy `.env.example` to `.env` and set the required values:
+### 5. Environment Setup
 
-```bash
-cp .env.example .env
-```
+Create `.env` file:
 
-Configure the following in `.env` file:
 ```env
-# Slack Configuration
-SLACK_BOT_TOKEN=xoxb-your-actual-bot-token
-SLACK_SIGNING_SECRET=your-actual-signing-secret
-PORT=3001
+# Get from "OAuth & Permissions" → Bot User OAuth Token
+SLACK_BOT_TOKEN=xoxb-your-bot-token
 
-# OpenHands Configuration
+# Get from "Basic Information" → Signing Secret
+SLACK_SIGNING_SECRET=your-signing-secret
+
+# Get from "Socket Mode" → App-Level Token
+SLACK_APP_TOKEN=xapp-your-app-token
+
+# OpenHands configuration
 OPENHANDS_API_URL=http://localhost:3000
-OPENHANDS_MODEL=lm_studio/devstral-small-2505
-OPENHANDS_BASE_URL_MODEL=http://host.docker.internal:1234/v1/
-OPENHANDS_API_KEY=dummy-api-key
-OPENHANDS_AGENT=CodeActAgent
-GITHUB_TOKEN=ghp_your-actual-github-token
+PORT=3001
 ```
 
-### 4. Slack App Configuration
+### 6. Add Bot to Channels
 
-1. Create an app at [Slack API](https://api.slack.com/apps)
-2. Get Bot Token (starts with `xoxb-`)
-3. Get Signing Secret
-4. Add the following scopes:
-   - `app_mentions:read`
-   - `chat:write`
-   - `im:read`
-   - `im:write`
-   - `channels:read`
-   - `groups:read`
-   - `mpim:read`
+In Slack, type `/invite @your-bot-name` in channels where you want to use it.
 
-### 5. External URL Setup
+### 7. Start Bot
 
-For development, you need an external URL for Slack to access your bot:
-
-#### Using localhost.run (Easy)
-```bash
-ssh -R 80:localhost:3001 localhost.run
-```
-
-#### Using ngrok
-```bash
-ngrok http 3001
-```
-
-Set the obtained URL as **Request URL** in your Slack App settings.
-
-### 6. Start the application
 ```bash
 npm start
 ```
 
 ## Usage
 
-### Basic Usage
-1. Mention the bot in Slack: `@bot-name write a program`
-2. OpenHands will respond
-3. Continue the conversation in the same thread without mentioning the bot
+### Mention the Bot
+```
+@openhands-bot Create a Python script that reads a CSV file
+```
+
+### Continue in Thread
+Once a conversation starts, you can continue in the same thread for the same project context.
+
+### Direct Messages
+Send direct messages to the bot for private conversations.
 
 ### Slash Commands
+
 - `/openhands-help` - Show help
-- `/openhands-status` - Check OpenHands status
+- `/openhands-status` - Check OpenHands connection
 - `/openhands-conversations` - List active conversations
-- `/openhands-open` - Open OpenHands WebUI
+- `/openhands-open` - Get OpenHands WebUI link
 
-## System Architecture
+## How It Works
 
-```
-Slack → Bot → OpenHands (Socket.IO) → LM Studio
-                ↓
-        Forward responses to Slack
-```
+1. **Thread Management**: Each Slack thread maps to an OpenHands conversation
+2. **Real-time Sync**: Socket connection streams OpenHands responses to Slack
+3. **Context Preservation**: Conversations maintain context within threads
+4. **No Domain Required**: Uses Slack's Socket Mode instead of webhooks
 
-## For Developers
+## Configuration
 
-### Project Structure
-```
-src/
-├── index.js                 # Main Slack Bot application
-├── openHandsSocketClient.js # OpenHands communication client
-└── config.js               # Configuration management
-```
+### OpenHands Settings
 
-### Development
+Default configuration in `src/config.js`:
+
+- **Model**: `lm_studio/devstral-small-2505`
+- **Base URL**: `http://host.docker.internal:1234/v1/`
+- **Agent**: `CodeActAgent`
+
+### Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `SLACK_BOT_TOKEN` | Bot User OAuth Token | ✅ |
+| `SLACK_SIGNING_SECRET` | App Signing Secret | ✅ |
+| `SLACK_APP_TOKEN` | App-Level Token for Socket Mode | ✅ |
+| `OPENHANDS_API_URL` | OpenHands base URL | ✅ |
+| `OPENHANDS_MODEL` | LLM model to use | ❌ |
+| `OPENHANDS_AGENT` | Agent type | ❌ |
+| `PORT` | Server port | ❌ |
+
+## Troubleshooting
+
+### Bot not responding
+1. Check OpenHands is running: `/openhands-status`
+2. Verify bot is invited to channel
+3. Check console logs for errors
+
+### Permission errors
+1. Ensure all required OAuth scopes are added
+2. Reinstall bot to workspace after scope changes
+
+### Socket connection issues
+1. Verify `SLACK_APP_TOKEN` is correct
+2. Ensure Socket Mode is enabled in Slack app settings
+
+## Development
+
 ```bash
-npm run dev  # Auto-restart with nodemon
+# Development mode with auto-restart
+npm run dev
+
+# Test OpenHands connection
+npm run test-connection
 ```
 
 ## License
 
-MIT License
+MIT License - feel free to modify and distribute!
 
 ## Contributing
 
-Pull requests and issue reports are welcome.
+1. Fork the repository
+2. Create your feature branch
+3. Submit a pull request
+
+---
+
+Made with ❤️ for the OpenHands community

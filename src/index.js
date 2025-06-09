@@ -5,7 +5,8 @@ const OpenHandsSocketClient = require('./openHandsSocketClient');
 const app = new App({
   token: config.slack.botToken,
   signingSecret: config.slack.signingSecret,
-  socketMode: false
+  socketMode: true,  // これでWebhookのようにドメイン不要になります
+  appToken: process.env.SLACK_APP_TOKEN  // Socket Modeに必要
 });
 
 const openHandsClient = new OpenHandsSocketClient();
@@ -30,7 +31,7 @@ app.event('app_mention', async ({ event, say }) => {
     const healthStatus = await openHandsClient.healthCheck();
     if (!healthStatus) {
       await say({
-        text: "申し訳ありません。OpenHandsサーバーに接続できません。サーバーが起動しているか確認してください。",
+        text: "Sorry, unable to connect to OpenHands server. Please check if the server is running.",
         thread_ts: threadId
       });
       return;
@@ -77,7 +78,7 @@ app.event('app_mention', async ({ event, say }) => {
   } catch (error) {
     console.error('Error handling mention:', error);
     await say({
-      text: "エラーが発生しました。後でもう一度お試しください。",
+      text: "An error occurred. Please try again later.",
       thread_ts: event.thread_ts || event.ts
     });
   }
@@ -103,7 +104,7 @@ app.event('message', async ({ event, say }) => {
       
       const healthStatus = await openHandsClient.healthCheck();
       if (!healthStatus) {
-        await say("申し訳ありません。OpenHandsサーバーに接続できません。");
+        await say("Sorry, unable to connect to OpenHands server.");
         return;
       }
 
@@ -124,7 +125,7 @@ app.event('message', async ({ event, say }) => {
 
     } catch (error) {
       console.error('Error handling DM:', error);
-      await say("エラーが発生しました。後でもう一度お試しください。");
+      await say("An error occurred. Please try again later.");
     }
     return;
   }
@@ -163,7 +164,7 @@ app.event('message', async ({ event, say }) => {
       } catch (error) {
         console.error('Error handling thread message:', error);
         await say({
-          text: "エラーが発生しました。OpenHandsで直接続けてください。",
+          text: "An error occurred. Please continue directly on OpenHands.",
           thread_ts: threadId
         });
       }
@@ -176,25 +177,25 @@ app.command('/openhands-help', async ({ command, ack, respond }) => {
   await ack();
   
   const helpText = `
-*OpenHands Slack Bot ヘルプ*
+*OpenHands Slack Bot Help*
 
-このボットはOpenHandsとSlackを連携させるためのものです。
+This bot integrates OpenHands with Slack.
 
-*使用方法:*
-• ボットをメンションしてメッセージを送信すると、OpenHandsが応答します
-• 同じスレッド内での会話は同じプロジェクトとして扱われます
-• ダイレクトメッセージでも利用できます
+*Usage:*
+• Mention the bot and send a message to get OpenHands responses
+• Conversations within the same thread are treated as the same project
+• Direct messages are also supported
 
-*設定情報:*
+*Configuration:*
 • OpenHands URL: ${config.openhands.baseUrl}
-• 使用モデル: ${config.openhands.model}
-• 使用エージェント: ${config.openhands.agent}
+• Model: ${config.openhands.model}
+• Agent: ${config.openhands.agent}
 
-*コマンド:*
-• \`/openhands-help\` - このヘルプを表示
-• \`/openhands-status\` - OpenHandsの状態を確認
-• \`/openhands-conversations\` - アクティブな会話一覧を表示
-• \`/openhands-open\` - OpenHandsのWebUIを開く
+*Commands:*
+• \`/openhands-help\` - Show this help
+• \`/openhands-status\` - Check OpenHands status
+• \`/openhands-conversations\` - List active conversations
+• \`/openhands-open\` - Open OpenHands WebUI
 `;
 
   await respond({
@@ -210,8 +211,8 @@ app.command('/openhands-status', async ({ command, ack, respond }) => {
   try {
     const healthStatus = await openHandsClient.healthCheck();
     const statusText = healthStatus 
-      ? "✅ OpenHandsサーバーは正常に動作しています"
-      : "❌ OpenHandsサーバーに接続できません";
+      ? "✅ OpenHands server is running normally"
+      : "❌ Unable to connect to OpenHands server";
     
     await respond({
       text: statusText,
@@ -219,7 +220,7 @@ app.command('/openhands-status', async ({ command, ack, respond }) => {
     });
   } catch (error) {
     await respond({
-      text: "❌ ステータス確認中にエラーが発生しました",
+      text: "❌ Error occurred while checking status",
       response_type: 'ephemeral'
     });
   }
@@ -234,16 +235,16 @@ app.command('/openhands-conversations', async ({ command, ack, respond }) => {
     
     if (conversations.length === 0) {
       await respond({
-        text: "現在アクティブな会話はありません。",
+        text: "No active conversations found.",
         response_type: 'ephemeral'
       });
       return;
     }
 
-    let responseText = "*🗂️ アクティブな会話一覧:*\n\n";
+    let responseText = "*🗂️ Active Conversations:*\n\n";
     conversations.forEach((conv, index) => {
-      responseText += `${index + 1}. **スレッド**: ${conv.threadId}\n`;
-      responseText += `   **会話ID**: \`${conv.conversationId}\`\n`;
+      responseText += `${index + 1}. **Thread**: ${conv.threadId}\n`;
+      responseText += `   **Conversation ID**: \`${conv.conversationId}\`\n`;
       responseText += `   **OpenHands**: ${conv.url}\n\n`;
     });
 
@@ -253,7 +254,7 @@ app.command('/openhands-conversations', async ({ command, ack, respond }) => {
     });
   } catch (error) {
     await respond({
-      text: "❌ 会話一覧の取得中にエラーが発生しました",
+      text: "❌ Error occurred while fetching conversations",
       response_type: 'ephemeral'
     });
   }
@@ -266,7 +267,7 @@ app.command('/openhands-open', async ({ command, ack, respond }) => {
   const url = openHandsClient.getOpenHandsUrl(command.channel_id);
   
   await respond({
-    text: `🚀 OpenHandsを開く: ${url}`,
+    text: `🚀 Open OpenHands: ${url}`,
     response_type: 'ephemeral'
   });
 });
@@ -274,9 +275,9 @@ app.command('/openhands-open', async ({ command, ack, respond }) => {
 // アプリ起動
 (async () => {
   try {
-    await app.start(config.slack.port);
-    console.log('⚡️ Slack bot is running!');
-    console.log(`Listening on port ${config.slack.port}`);
+    await app.start();
+    console.log('⚡️ Slack bot is running in Socket Mode!');
+    console.log('No domain required - using WebSocket connection');
     
     // OpenHandsの接続確認
     const healthStatus = await openHandsClient.healthCheck();

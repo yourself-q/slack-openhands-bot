@@ -1,4 +1,4 @@
-# Slack-OpenHands Bot
+# Slack-OpenHands Bot　[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/yourself-q/slack-openhands-bot)
 
 A Slack bot that integrates with OpenHands using Socket Mode (no domain required).
 
